@@ -1,6 +1,9 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
-}
+// IDEAS
+//
+// Contexes are spatially cacehable
+
+mod pattern;
+mod context;
 
 #[cfg(test)]
 mod tests {
@@ -8,7 +11,6 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+
     }
 }
