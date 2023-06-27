@@ -1,13 +1,13 @@
 use std::str::{ Utf8Error, from_utf8 };
 
 #[derive(Debug)]
-struct ContextBuffer {
+pub struct ContextBuffer {
     inner: [u8; Self::SIZE]
 }
 
 impl ContextBuffer {
-    const EXTENT: usize = 10;
-    const SIZE: usize = 1 + 2 * Self::EXTENT;
+    pub const EXTENT: usize = 10;
+    pub const SIZE: usize = 1 + 2 * Self::EXTENT;
 
     const fn empty() -> Self {
         let mut inner = [b' '; ContextBuffer::SIZE];
@@ -49,6 +49,7 @@ impl ContextBuilder {
     }
 }
 
+// TODO: add current char
 #[derive(Debug)]
 pub struct Context {
     buf: ContextBuffer,
@@ -63,16 +64,16 @@ impl Context {
         unsafe { std::str::from_utf8_unchecked(slice) }
     }
 
-    pub fn of(string: &str, at: usize) -> Self {
+    pub fn of(chars: &[char], at: usize) -> Self {
         let mut context = ContextBuilder::new();
-        let preceding = &string[..at];
-        let following = &string[at + 1..];
+        let preceding = chars[..at].iter().rev();
+        let following = chars[at + 1..].iter().take(ContextBuffer::EXTENT);
 
         let mut previous_invalid = false;
-        for c in preceding.chars().rev() {
+        for c in preceding {
             if context.left == 0 { break; }
-            if let Some(ascii) = asciify(c) {
-                context.prepend(ascii);
+            if let Some(upcase) = upcase_accent(*c) {
+                context.prepend(upcase);
                 previous_invalid = false;
             } else if previous_invalid {
                 previous_invalid = false;
@@ -82,8 +83,8 @@ impl Context {
             }
         }
 
-        for c in following.chars().take(ContextBuffer::EXTENT) {
-            if let Some(ascii) = asciify(c) {
+        for c in following {
+            if let Some(ascii) = downcase_asciify(*c) {
                 context.append(ascii);
             } else {
                 context.append(b' ');
@@ -95,7 +96,25 @@ impl Context {
     }
 }
 
-fn asciify(c: char) -> Option<u8> {
+pub fn asciify(c: char) -> Option<char> {
+    match c {
+        'ç' => Some('c'),
+        'Ç' => Some('C'),
+        'ğ' => Some('g'),
+        'Ğ' => Some('G'),
+        'ö' => Some('o'),
+        'Ö' => Some('O'),
+        'ü' => Some('u'),
+        'Ü' => Some('U'),
+        'ı' => Some('i'),
+        'İ' => Some('I'),
+        'ş' => Some('s'),
+        'Ş' => Some('S'),
+        _ => None 
+    }
+}
+
+pub fn downcase_asciify(c: char) -> Option<u8> {
     match c {
       'ç' => Some(b'c'),
       'Ç' => Some(b'c'),
@@ -113,25 +132,25 @@ fn asciify(c: char) -> Option<u8> {
     }
 }
 
-fn upcase_accent(c: char) -> (bool, u8) {
+pub fn upcase_accent(c: char) -> Option<u8> {
     match c {
-      'ç' => (true, b'C'),
-      'Ç' => (true, b'C'),
-      'ğ' => (true, b'G'),
-      'Ğ' => (true, b'G'),
-      'ö' => (true, b'O'),
-      'Ö' => (true, b'O'),
-      'ı' => (true, b'I'),
-      'İ' => (true, b'i'),
-      'ş' => (true, b'S'),
-      'Ş' => (true, b'S'),
-      'ü' => (true, b'U'),
-      'Ü' => (true, b'U'),
-      _ => (c.is_ascii_alphabetic(), c.to_ascii_lowercase() as u8),
+      'ç' => Some(b'C'),
+      'Ç' => Some(b'C'),
+      'ğ' => Some(b'G'),
+      'Ğ' => Some(b'G'),
+      'ö' => Some(b'O'),
+      'Ö' => Some(b'O'),
+      'ı' => Some(b'I'),
+      'İ' => Some(b'i'),
+      'ş' => Some(b'S'),
+      'Ş' => Some(b'S'),
+      'ü' => Some(b'U'),
+      'Ü' => Some(b'U'),
+      _ => c.is_ascii_alphabetic().then_some(c.to_ascii_lowercase() as u8),
     }
 }
 
-fn toggle_accent(c: char) -> char {
+pub fn toggle_accent(c: char) -> char {
     match c {
         'c' => 'ç',
         'C' => 'Ç',

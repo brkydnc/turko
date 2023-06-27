@@ -1,5 +1,5 @@
-use turko::context::Context;
+use turko::correct;
 
 fn main() {
-    dbg!(Context::of("a;slkdjfgo;psjdg;kjlasdg;jklasdg;jkl", 10).as_str());
+    dbg!(correct("Opusmegi cagristiran catirtilar"));
 }
