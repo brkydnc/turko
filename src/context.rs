@@ -1,6 +1,5 @@
 use std::str::{ Utf8Error, from_utf8 };
 
-// TODO: Maybe the performance of `char` is better than `u8`?
 #[derive(Debug)]
 struct ContextBuffer {
     inner: [u8; Self::SIZE]
@@ -27,24 +26,24 @@ impl ContextBuilder {
     const fn new() -> Self {
         Self {
             buf: ContextBuffer::empty(),
-            left: ContextBuffer::EXTENT - 1,
-            right: ContextBuffer::EXTENT + 1
+            left: ContextBuffer::EXTENT,
+            right: ContextBuffer::EXTENT,
         }
     }
 
-    fn append(&mut self, byte: u8) {
-        self.buf.inner[self.right] = byte;
+    fn append(&mut self, c: u8) {
         self.right += 1;
+        self.buf.inner[self.right] = c;
     }
 
     fn prepend(&mut self, byte: u8) {
-        self.buf.inner[self.left] = byte;
         self.left -= 1;
+        self.buf.inner[self.left] = byte;
     }
 
     fn build(self) -> Result<Context, Utf8Error> {
         match from_utf8(&self.buf.inner) {
-            Ok(_) => Ok(Context { buf: self.buf, end: self.right }),
+            Ok(_) => Ok(Context { buf: self.buf, end: self.right + 1 }),
             Err(e) => Err(e)
         }
     }
@@ -71,6 +70,7 @@ impl Context {
 
         let mut previous_invalid = false;
         for c in preceding.chars().rev() {
+            if context.left == 0 { break; }
             if let Some(ascii) = asciify(c) {
                 context.prepend(ascii);
                 previous_invalid = false;
