@@ -6,7 +6,7 @@ pub struct ContextBuffer {
 }
 
 impl ContextBuffer {
-    pub const EXTENT: usize = 10;
+    pub const EXTENT: usize = 4;
     pub const SIZE: usize = 1 + 2 * Self::EXTENT;
 
     const fn empty() -> Self {
