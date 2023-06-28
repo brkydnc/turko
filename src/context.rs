@@ -96,21 +96,21 @@ impl Context {
     }
 }
 
-pub fn asciify(c: char) -> Option<char> {
+pub fn asciify(c: char) -> char {
     match c {
-        'ç' => Some('c'),
-        'Ç' => Some('C'),
-        'ğ' => Some('g'),
-        'Ğ' => Some('G'),
-        'ö' => Some('o'),
-        'Ö' => Some('O'),
-        'ü' => Some('u'),
-        'Ü' => Some('U'),
-        'ı' => Some('i'),
-        'İ' => Some('I'),
-        'ş' => Some('s'),
-        'Ş' => Some('S'),
-        _ => None 
+        'ç' => 'c',
+        'Ç' => 'C',
+        'ğ' => 'g',
+        'Ğ' => 'G',
+        'ö' => 'o',
+        'Ö' => 'O',
+        'ü' => 'u',
+        'Ü' => 'U',
+        'ı' => 'i',
+        'İ' => 'I',
+        'ş' => 's',
+        'Ş' => 'S',
+        _ => c 
     }
 }
 

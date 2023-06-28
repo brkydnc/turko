@@ -16,8 +16,6 @@ pub fn correct(string: &str) -> String {
         let c = turkish[i];
         let context = Context::of(&turkish, i);
 
-        dbg!(context.as_str());
-
         if need_correction(&context, c) {
             turkish[i] = toggle_accent(c)
         }
@@ -27,7 +25,7 @@ pub fn correct(string: &str) -> String {
 }
 
 fn need_correction(context: &Context, character: char) -> bool {
-    let maybe_ascii = asciify(character).unwrap_or(character);
+    let maybe_ascii = asciify(character);
 
     let matches = if let Some(table) = PATTERN_TABLE_INDEX.get(&maybe_ascii.to_ascii_lowercase()) {
         match_pattern(context, table)
