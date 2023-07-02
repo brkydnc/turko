@@ -1,6 +1,6 @@
 include!(concat!(env!("OUT_DIR"), "/table.rs"));
 
-pub type PatternTable = phf::Map<&'static str, i32>;
+pub type PatternTable = phf::Map<u64, i32>;
 
 pub fn get_pattern_table(c: char) -> (&'static  PatternTable, i32) {
     match c {

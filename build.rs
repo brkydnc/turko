@@ -4,6 +4,27 @@ use std::io::{BufWriter, Write};
 use std::path::Path;
 
 const INDICES: [char; 6] = ['c', 'g', 'i', 'o', 's', 'u'];
+const MAX_EXTENT: usize = 4;
+
+fn extent(string: &str) -> usize {
+    let position = string.bytes().position(|x| x == b'X').unwrap();
+    position.max(string.len() - position - 1)
+}
+
+fn pattern_to_integer(pattern: &str) -> u64 {
+    assert!(pattern.len() <= MAX_EXTENT * 2 + 1);
+
+    let bytes = pattern.as_bytes();
+    let position = pattern.bytes().position(|x| x == b'X').unwrap();
+
+    let offset = std::mem::size_of::<u64>() / 2;
+    let mut number = [0u8; std::mem::size_of::<u64>()];
+
+    (&mut number[offset - position..]).write(&bytes[..position]).unwrap();
+    (&mut number[offset..]).write(&bytes[position + 1..]).unwrap();
+
+    u64::from_be_bytes(number)
+}
 
 fn main() {
     let outdir = env::var("OUT_DIR").unwrap();
@@ -15,13 +36,14 @@ fn main() {
         let mut map = phf_codegen::Map::new();
 
         for line in content.lines() {
-            let (key, value) = line.split_once(',').unwrap();
-            map.entry(key, value);
+            if extent(line) > MAX_EXTENT { continue; }
+            let (pattern, rank) = line.split_once(',').unwrap();
+            map.entry(pattern_to_integer(pattern), rank);
         }
 
         write!(
             &mut codegen_file,
-            "static {}: phf::Map<&'static str, i32> = {};",
+            "static {}: phf::Map<u64, i32> = {};",
             index.to_ascii_uppercase(),
             map.build(),
         ).unwrap();

@@ -88,7 +88,6 @@ impl Context {
                 context.append(ascii);
             } else {
                 context.append(b' ');
-                break;
             }
         }
 

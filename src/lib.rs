@@ -1,5 +1,6 @@
 mod pattern;
 mod context;
+mod kontext;
 
 use pattern::{PatternTable, get_pattern_table, is_index};
 pub use context::{Context, ContextBuffer, asciify, toggle_accent};
@@ -30,17 +31,17 @@ fn need_correction(context: &Context, character: char) -> bool {
 fn match_pattern(context: &Context, table: &PatternTable, mut rank: i32) -> bool {
     let context_string = context.as_str();
 
-    for start in 0..=ContextBuffer::EXTENT {
-        for stop in ContextBuffer::EXTENT + 1..=context_string.len() {
-            let substring = &context_string[start..stop];
+    // for start in 0..=ContextBuffer::EXTENT {
+    //     for stop in ContextBuffer::EXTENT + 1..=context_string.len() {
+    //         let substring = &context_string[start..stop];
 
-            if let Some(r) = table.get(substring) {
-                if r.abs() < rank.abs() {
-                    rank = *r;
-                }
-            }
-        }
-    }
+    //         if let Some(r) = table.get(substring) {
+    //             if r.abs() < rank.abs() {
+    //                 rank = *r;
+    //             }
+    //         }
+    //     }
+    // }
 
     rank > 0
 }
