@@ -1,6 +1,6 @@
 mod pattern;
 mod context;
-mod kontext;
+mod deasciifier;
 
 use pattern::{PatternTable, get_pattern_table, is_index};
 pub use context::{Context, ContextBuffer, asciify, toggle_accent};
