@@ -1,98 +1,78 @@
-use std::str::{ Utf8Error, from_utf8 };
+use std::iter::repeat;
 
-#[derive(Debug)]
-pub struct ContextBuffer {
-    inner: [u8; Self::SIZE]
-}
+pub const EXTENT: usize = 4;
+// TODO: use 0 as empty (remove spaces=0x20)?
+const EMPTY_PATTERN: u64 = 0x2020202020202020;
 
-impl ContextBuffer {
-    pub const EXTENT: usize = 4;
-    pub const SIZE: usize = 1 + 2 * Self::EXTENT;
-
-    const fn empty() -> Self {
-        let mut inner = [b' '; ContextBuffer::SIZE];
-        inner[ContextBuffer::EXTENT] = b'X';
-        Self { inner }
-    }
-}
-
-struct ContextBuilder {
-    buf: ContextBuffer,
-    left: usize,
-    right: usize,
-}
-
-impl ContextBuilder {
-    const fn new() -> Self {
-        Self {
-            buf: ContextBuffer::empty(),
-            left: ContextBuffer::EXTENT,
-            right: ContextBuffer::EXTENT,
-        }
-    }
-
-    fn append(&mut self, c: u8) {
-        self.right += 1;
-        self.buf.inner[self.right] = c;
-    }
-
-    fn prepend(&mut self, byte: u8) {
-        self.left -= 1;
-        self.buf.inner[self.left] = byte;
-    }
-
-    fn build(self) -> Result<Context, Utf8Error> {
-        match from_utf8(&self.buf.inner) {
-            Ok(_) => Ok(Context { buf: self.buf, end: self.right + 1 }),
-            Err(e) => Err(e)
-        }
-    }
-}
-
-// TODO: add current char
 #[derive(Debug)]
 pub struct Context {
-    buf: ContextBuffer,
-    end: usize,
+    pub pattern: u64,
+    pub current: char,
 }
 
 impl Context {
-    pub fn as_str(&self) -> &str {
-        // SAFETY: ContextBuilder guarantees that the bytes are
-        // valid ASCII.
-        let slice = &self.buf.inner[..self.end];
-        unsafe { std::str::from_utf8_unchecked(slice) }
-    }
-
     pub fn of(chars: &[char], at: usize) -> Self {
-        let mut context = ContextBuilder::new();
-        let preceding = chars[..at].iter().rev();
-        let following = chars[at + 1..].iter().take(ContextBuffer::EXTENT);
+        let current = chars[at];
 
-        let mut previous_invalid = false;
-        for c in preceding {
-            if context.left == 0 { break; }
-            if let Some(upcase) = upcase_accent(*c) {
-                context.prepend(upcase);
-                previous_invalid = false;
-            } else if previous_invalid {
-                previous_invalid = false;
+        let mut pattern = chars[at + 1..]
+            .iter()
+            .map(forward)
+            .chain(repeat(0x20))
+            .take(EXTENT)
+            .fold(EMPTY_PATTERN, |p, n| (p << 8) | n);
+
+        let mut i = 4;
+        let mut invalid = false;
+
+        for c in chars[..at].iter().rev() {
+            let b = backward(c);
+
+            if b == 0 {
+                if !invalid {
+                    invalid = true;
+                    pattern &= !(0xFF << (i * 8));
+                    pattern |= 0x20 << (i * 8);
+                    i += 1;
+                }
             } else {
-                context.prepend(b' ');
-                previous_invalid = true;
+                invalid = false;
+                pattern &= !(0xFF << (i * 8));
+                pattern |= b << (i * 8);
+                i += 1;
             }
+
+            if i == 8 { break; }
         }
 
-        for c in following {
-            if let Some(ascii) = downcase_asciify(*c) {
-                context.append(ascii);
-            } else {
-                context.append(b' ');
-            }
-        }
-
-        context.build().unwrap()
+        Self { pattern, current }
     }
+}
+
+pub fn forward(c: &char) -> u64 {
+    match c {
+        'a'..='z'|'A'..='Z' => c.to_ascii_lowercase(),
+        'ç'|'Ç' => 'c',
+        'ğ'|'Ğ' => 'g',
+        'ö'|'Ö' => 'o',
+        'ı'|'İ' => 'i',
+        'ş'|'Ş' => 's',
+        'ü'|'Ü' => 'u',
+      _ => '\0',
+    }.into()
+}
+
+pub fn backward(c: &char) -> u64 {
+    match c {
+        'a'..='z'|'A'..='Z' => c.to_ascii_lowercase(),
+        'ç'|'Ç' => 'C',
+        'ğ'|'Ğ' => 'G',
+        'ö'|'Ö' => 'O',
+        'ş'|'Ş' => 'S',
+        'ü'|'Ü' => 'U',
+        'ı' => 'I',
+        'İ' => 'i',
+      _ => '\0',
+    }.into()
 }
 
 pub fn asciify(c: char) -> char {
@@ -110,42 +90,6 @@ pub fn asciify(c: char) -> char {
         'ş' => 's',
         'Ş' => 'S',
         _ => c 
-    }
-}
-
-pub fn downcase_asciify(c: char) -> Option<u8> {
-    match c {
-      'ç' => Some(b'c'),
-      'Ç' => Some(b'c'),
-      'ğ' => Some(b'g'),
-      'Ğ' => Some(b'g'),
-      'ö' => Some(b'o'),
-      'Ö' => Some(b'o'),
-      'ı' => Some(b'i'),
-      'İ' => Some(b'i'),
-      'ş' => Some(b's'),
-      'Ş' => Some(b's'),
-      'ü' => Some(b'u'),
-      'Ü' => Some(b'u'),
-        _ => c.is_ascii_alphabetic().then_some(c.to_ascii_lowercase() as u8),
-    }
-}
-
-pub fn upcase_accent(c: char) -> Option<u8> {
-    match c {
-      'ç' => Some(b'C'),
-      'Ç' => Some(b'C'),
-      'ğ' => Some(b'G'),
-      'Ğ' => Some(b'G'),
-      'ö' => Some(b'O'),
-      'Ö' => Some(b'O'),
-      'ı' => Some(b'I'),
-      'İ' => Some(b'i'),
-      'ş' => Some(b'S'),
-      'Ş' => Some(b'S'),
-      'ü' => Some(b'U'),
-      'Ü' => Some(b'U'),
-      _ => c.is_ascii_alphabetic().then_some(c.to_ascii_lowercase() as u8),
     }
 }
 

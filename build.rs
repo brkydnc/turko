@@ -5,6 +5,7 @@ use std::path::Path;
 
 const INDICES: [char; 6] = ['c', 'g', 'i', 'o', 's', 'u'];
 const MAX_EXTENT: usize = 4;
+const SPACE: u8 = 0x20;
 
 fn extent(string: &str) -> usize {
     let position = string.bytes().position(|x| x == b'X').unwrap();
@@ -36,8 +37,8 @@ fn main() {
         let mut map = phf_codegen::Map::new();
 
         for line in content.lines() {
-            if extent(line) > MAX_EXTENT { continue; }
             let (pattern, rank) = line.split_once(',').unwrap();
+            if extent(pattern) > MAX_EXTENT { continue; }
             map.entry(pattern_to_integer(pattern), rank);
         }
 

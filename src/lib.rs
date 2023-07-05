@@ -1,9 +1,16 @@
 mod pattern;
 mod context;
-mod deasciifier;
 
 use pattern::{PatternTable, get_pattern_table, is_index};
-pub use context::{Context, ContextBuffer, asciify, toggle_accent};
+pub use context::{EXTENT, Context, asciify, toggle_accent};
+
+const MASKS: [u64; 25] = [
+    0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFF00, 0xFFFFFFFFFFFF0000, 0xFFFFFFFFFF000000, 0xFFFFFFFF00000000,
+    0x00FFFFFFFFFFFFFF, 0x00FFFFFFFFFFFF00, 0x00FFFFFFFFFF0000, 0x00FFFFFFFF000000, 0x00FFFFFF00000000,
+    0x0000FFFFFFFFFFFF, 0x0000FFFFFFFFFF00, 0x0000FFFFFFFF0000, 0x0000FFFFFF000000, 0x0000FFFF00000000,
+    0x000000FFFFFFFFFF, 0x000000FFFFFFFF00, 0x000000FFFFFF0000, 0x000000FFFF000000, 0x000000FF00000000,
+    0x00000000FFFFFFFF, 0x00000000FFFFFF00, 0x00000000FFFF0000, 0x00000000FF000000, 0x0000000000000000,
+];
 
 pub fn correct(string: &str) -> String {
     let mut turkish: Vec<char> = string.chars().collect();
@@ -29,19 +36,13 @@ fn need_correction(context: &Context, character: char) -> bool {
 }
 
 fn match_pattern(context: &Context, table: &PatternTable, mut rank: i32) -> bool {
-    let context_string = context.as_str();
-
-    // for start in 0..=ContextBuffer::EXTENT {
-    //     for stop in ContextBuffer::EXTENT + 1..=context_string.len() {
-    //         let substring = &context_string[start..stop];
-
-    //         if let Some(r) = table.get(substring) {
-    //             if r.abs() < rank.abs() {
-    //                 rank = *r;
-    //             }
-    //         }
-    //     }
-    // }
+    for mask in MASKS {
+        if let Some(r) = table.get(&(context.pattern & mask)) {
+            if r.abs() < rank.abs() {
+                rank = *r;
+            }
+        }
+    }
 
     rank > 0
 }
