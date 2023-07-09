@@ -33,13 +33,16 @@ fn main() {
     let mut codegen_file = BufWriter::new(File::create(&codegen_path).unwrap());
 
     for index in INDICES {
-        let content = std::fs::read_to_string(format!("table/{}", index)).unwrap();
+        let content = std::fs::read_to_string(format!("table/ascii/{}", index)).unwrap();
+        let mut hex_file = BufWriter::new(File::create(format!("table/hex/{}", index)).unwrap());
         let mut map = phf_codegen::Map::new();
 
         for line in content.lines() {
             let (pattern, rank) = line.split_once(',').unwrap();
             if extent(pattern) > MAX_EXTENT { continue; }
-            map.entry(pattern_to_integer(pattern), rank);
+            let hex = pattern_to_integer(pattern);
+            map.entry(hex, rank);
+            writeln!(&mut hex_file, "{},{}", hex, rank).unwrap();
         }
 
         write!(
@@ -49,6 +52,6 @@ fn main() {
             map.build(),
         ).unwrap();
 
-        write!(&mut codegen_file, "\n").unwrap()
+        writeln!(&mut codegen_file, "\n").unwrap()
     }
 }
