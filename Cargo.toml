@@ -9,6 +9,7 @@ license-file = "LICENSE"
 debug = true
 
 [dependencies]
+crossbeam = "0.8.2"
 phf = "0.11.2"
 
 [build-dependencies]

@@ -12,8 +12,8 @@ const MASKS: [u64; 25] = [
     0x00000000FFFFFFFF, 0x00000000FFFFFF00, 0x00000000FFFF0000, 0x00000000FF000000, 0x0000000000000000,
 ];
 
-pub fn correct(string: &str) -> String {
-    let mut turkish: Vec<char> = string.chars().collect();
+
+fn correct_string(turkish: &mut [char]) {
 
     for i in 0..turkish.len() {
         let c = turkish[i];
@@ -26,6 +26,34 @@ pub fn correct(string: &str) -> String {
             turkish[i] = toggle_accent(c)
         }
     }
+}
+
+
+pub fn correct_multithreaded(string: &str, thread_count: usize) -> String {
+
+    let mut turkish: Vec<char> = string.chars().collect();
+
+    let chunk_size = turkish.len() / thread_count;
+
+    // Create a thread pool for correcting different parts of the same string concurrently.
+    // This will decrease accuracy very slightly because there is words that are chopped of
+    //      when they are divided to chunks.  
+    let _ = crossbeam::scope(|scope| {
+
+        // Divide the string to chunks
+        for slice in turkish.chunks_mut(chunk_size) {
+            scope.spawn(move |_| correct_string(slice));
+        }
+    });
+
+    turkish.into_iter().collect()
+}
+
+pub fn correct(string: &str) -> String {
+
+    let mut turkish: Vec<char> = string.chars().collect();
+    
+    correct_string(&mut turkish);
 
     turkish.into_iter().collect()
 }

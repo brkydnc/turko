@@ -1,4 +1,4 @@
-use turko::{correct, asciify};
+use turko::{correct, asciify, correct_multithreaded};
 use std::time::Instant;
 
 fn is_turkish_char(c: char) -> bool {
@@ -13,7 +13,8 @@ fn main() {
     let ascii = text.chars().map(asciify).collect::<String>();
 
     let now = Instant::now();
-    let output = correct(&ascii);
+    // let output = correct(&ascii);
+    let output = correct_multithreaded(&ascii, 4);
     let elapsed = now.elapsed();
 
     let mut num_original_turkish_chars: usize = 0;

@@ -1,4 +1,3 @@
-use std::iter::repeat;
 
 pub const EXTENT: usize = 4;
 // TODO: use 0 as empty (remove spaces=0x20)?
@@ -17,7 +16,6 @@ impl Context {
         let mut pattern = chars[at + 1..]
             .iter()
             .map(forward)
-            .chain(repeat(0x20))
             .take(EXTENT)
             .fold(EMPTY_PATTERN, |p, n| (p << 8) | n);
 
