@@ -6,6 +6,8 @@ edition = "2021"
 license-file = "LICENSE"
 
 [profile.release]
+lto = true
+codegen-units = 1
 debug = true
 
 [dependencies]

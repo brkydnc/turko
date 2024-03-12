@@ -14,28 +14,28 @@ fn main() {
 
     let now = Instant::now();
     // let output = correct(&ascii);
-    let output = correct_multithreaded(&ascii, 4);
+    let output = correct(&ascii);
     let elapsed = now.elapsed();
 
-    let mut num_original_turkish_chars: usize = 0;
-    let mut num_true_corrected: usize = 0;
-    let mut num_false_corrected: usize = 0;
+    // let mut num_original_turkish_chars: usize = 0;
+    // let mut num_true_corrected: usize = 0;
+    // let mut num_false_corrected: usize = 0;
 
-    for (original, corrected) in text.chars().zip(output.chars()) {
-        if is_turkish_char(original) {
-            num_original_turkish_chars += 1;
+    // for (original, corrected) in text.chars().zip(output.chars()) {
+    //     if is_turkish_char(original) {
+    //         num_original_turkish_chars += 1;
 
-            if original == corrected {
-                num_true_corrected += 1;
-            }
-        } else {
-            if original != corrected {
-                num_false_corrected += 1;
-            }
-        }
-    }
+    //         if original == corrected {
+    //             num_true_corrected += 1;
+    //         }
+    //     } else {
+    //         if original != corrected {
+    //             num_false_corrected += 1;
+    //         }
+    //     }
+    // }
 
-    println!("elapsed: {:?}", elapsed);
-    println!("original: {}, true: {}, false: {}", num_original_turkish_chars, num_true_corrected, num_false_corrected);
-    println!("accuracy: {}, correcting error: {}", 100f64 * num_true_corrected as f64 / num_original_turkish_chars as f64, 100f64 * num_false_corrected as f64 / (num_true_corrected + num_false_corrected) as f64);
+    // println!("elapsed: {:?}", elapsed);
+    // println!("original: {}, true: {}, false: {}", num_original_turkish_chars, num_true_corrected, num_false_corrected);
+    // println!("accuracy: {}, correcting error: {}", 100f64 * num_true_corrected as f64 / num_original_turkish_chars as f64, 100f64 * num_false_corrected as f64 / (num_true_corrected + num_false_corrected) as f64);
 }
